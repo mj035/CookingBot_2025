@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  quest2ros:
+    image: ghcr.io/mj035/quest2ros_fresh:latest
+    container_name: quest2ros_fresh
+    privileged: true
+    network_mode: host
+    environment:
+      - DISPLAY=${DISPLAY}
+      - ROS_MASTER_URI=http://localhost:11311
+      - ROS_HOSTNAME=localhost
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ./:/workspace
+      - /dev:/dev
+    stdin_open: true
+    tty: true
+    command: /bin/bash

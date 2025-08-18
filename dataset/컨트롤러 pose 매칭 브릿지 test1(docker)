@@ -1,0 +1,232 @@
+#!/usr/bin/env python3
+"""
+🎯 데이터 수집용 VR Bridge (간소화)
+- VR pose만 전송 (제어 없음)
+- MuJoCo 수집기와 연동
+- 실시간 캘리브레이션
+"""
+
+import rospy
+import numpy as np
+import json
+import socket
+import threading
+import time
+from geometry_msgs.msg import PoseStamped
+import tf.transformations as tf_trans
+
+class VRDataBridge:
+    def __init__(self):
+        rospy.init_node('vr_data_bridge')
+        
+        print("🎯 데이터 수집용 VR Bridge 시작")
+        
+        # VR 데이터
+        self.vr_data = {
+            'position': np.array([0.0, 0.0, 0.0]),
+            'orientation': np.array([0.0, 0.0, 0.0, 1.0]),
+            'initial_position': None,
+            'initial_orientation': None,
+            'calibrated': False
+        }
+        
+        # VR 입력
+        self.vr_inputs = {
+            'button_upper': False,
+            'button_lower': False
+        }
+        
+        # 소켓 서버 설정 (MuJoCo 수집기와 통신)
+        self.setup_socket_server()
+        
+        # ROS 설정
+        self.setup_ros_topics()
+        
+        # 전송 스레드
+        self.send_thread = threading.Thread(target=self.send_loop, daemon=True)
+        self.send_thread.start()
+        
+        print("✅ VR 데이터 브릿지 준비 완료!")
+    
+    def setup_socket_server(self):
+        """소켓 서버 설정"""
+        try:
+            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.server_socket.bind(('0.0.0.0', 12346))  # 다른 포트 사용
+            self.server_socket.listen(5)
+            self.clients = []
+            
+            accept_thread = threading.Thread(target=self.accept_clients, daemon=True)
+            accept_thread.start()
+            
+            print("✅ 소켓 서버 시작: 포트 12346")
+        except Exception as e:
+            print(f"❌ 소켓 서버 오류: {e}")
+    
+    def accept_clients(self):
+        """클라이언트 수락"""
+        while True:
+            try:
+                client, addr = self.server_socket.accept()
+                self.clients.append(client)
+                print(f"🔗 MuJoCo 수집기 연결: {addr}")
+            except:
+                break
+    
+    def setup_ros_topics(self):
+        """ROS 토픽 설정"""
+        rospy.Subscriber('/q2r_left_hand_pose', PoseStamped, self.hand_pose_callback)
+        
+        try:
+            from quest2ros.msg import OVR2ROSInputs
+            rospy.Subscriber('/q2r_left_hand_inputs', OVR2ROSInputs, self.input_callback)
+            print("✅ VR 입력 토픽 구독됨")
+        except ImportError:
+            print("⚠️ OVR2ROSInputs 메시지 없음")
+        
+        print("✅ ROS 토픽 설정 완료")
+    
+    def hand_pose_callback(self, msg):
+        """VR 손 Pose 콜백"""
+        self.vr_data['position'] = np.array([
+            msg.pose.position.x,
+            msg.pose.position.y,
+            msg.pose.position.z
+        ])
+        
+        self.vr_data['orientation'] = np.array([
+            msg.pose.orientation.x,
+            msg.pose.orientation.y,
+            msg.pose.orientation.z,
+            msg.pose.orientation.w
+        ])
+        
+        # 초기 캘리브레이션
+        if not self.vr_data['calibrated']:
+            self.vr_data['initial_position'] = self.vr_data['position'].copy()
+            self.vr_data['initial_orientation'] = self.vr_data['orientation'].copy()
+            self.vr_data['calibrated'] = True
+            print("🖐 VR 컨트롤러 캘리브레이션 완료")
+    
+    def input_callback(self, msg):
+        """VR 입력 콜백"""
+        try:
+            if hasattr(msg, 'button_upper'):
+                self.vr_inputs['button_upper'] = msg.button_upper
+            if hasattr(msg, 'button_lower'):
+                self.vr_inputs['button_lower'] = msg.button_lower
+            
+            # A+B 버튼으로 재캘리브레이션
+            if (self.vr_inputs['button_upper'] and 
+                self.vr_inputs['button_lower']):
+                self.recalibrate()
+                
+        except Exception as e:
+            rospy.logwarn(f"입력 처리 오류: {e}")
+    
+    def recalibrate(self):
+        """재캘리브레이션"""
+        if self.vr_data['position'] is not None:
+            self.vr_data['initial_position'] = self.vr_data['position'].copy()
+            self.vr_data['initial_orientation'] = self.vr_data['orientation'].copy()
+            print("🔄 VR 컨트롤러 재캘리브레이션 완료!")
+    
+    def get_vr_deltas(self):
+        """VR 델타 계산"""
+        if not self.vr_data['calibrated']:
+            return None
+        
+        # Position delta
+        pos_delta = self.vr_data['position'] - self.vr_data['initial_position']
+        
+        # Orientation delta (오일러각)
+        current_euler = tf_trans.euler_from_quaternion(self.vr_data['orientation'])
+        initial_euler = tf_trans.euler_from_quaternion(self.vr_data['initial_orientation'])
+        ori_delta = np.array(current_euler) - np.array(initial_euler)
+        
+        return {
+            'position_delta': pos_delta.tolist(),
+            'orientation_delta': ori_delta.tolist(),
+            'absolute_position': self.vr_data['position'].tolist(),
+            'absolute_orientation': self.vr_data['orientation'].tolist()
+        }
+    
+    def send_loop(self):
+        """데이터 전송 루프"""
+        rate = rospy.Rate(60)  # 60Hz
+        
+        while not rospy.is_shutdown():
+            if self.clients and self.vr_data['calibrated']:
+                vr_deltas = self.get_vr_deltas()
+                
+                if vr_deltas:
+                    data = {
+                        'vr_deltas': vr_deltas,
+                        'vr_status': {
+                            'calibrated': self.vr_data['calibrated'],
+                            'button_upper': self.vr_inputs['button_upper'],
+                            'button_lower': self.vr_inputs['button_lower']
+                        },
+                        'timestamp': rospy.Time.now().to_sec()
+                    }
+                    
+                    json_data = json.dumps(data) + '\n'
+                    
+                    # 연결 끊긴 클라이언트 제거
+                    failed_clients = []
+                    for client in self.clients:
+                        try:
+                            client.sendall(json_data.encode())
+                        except:
+                            failed_clients.append(client)
+                    
+                    for client in failed_clients:
+                        if client in self.clients:
+                            self.clients.remove(client)
+            
+            rate.sleep()
+    
+    def run(self):
+        """메인 실행"""
+        print("\n🎯 === VR 데이터 브릿지 실행 중 ===")
+        print("🖐 VR 컨트롤러를 자유롭게 움직이세요")
+        print("🔄 A+B 버튼으로 재캘리브레이션")
+        print("📡 MuJoCo 수집기에 실시간 데이터 전송")
+        print("=" * 50)
+        
+        last_print_time = time.time()
+        
+        try:
+            while not rospy.is_shutdown():
+                time.sleep(0.2)  # 200ms 간격으로 체크
+                
+                current_time = time.time()
+                
+                # 상태 출력 (1초마다 - 빠른 업데이트!)
+                if current_time - last_print_time >= 1.0:
+                    print(f"\r📊 VR: {'✅' if self.vr_data['calibrated'] else '❌'} | 연결: {len(self.clients)}개", end="")
+                    
+                    if self.vr_data['calibrated']:
+                        deltas = self.get_vr_deltas()
+                        if deltas:
+                            pos = deltas['position_delta']
+                            ori = deltas['orientation_delta']
+                            print(f" | Pos: X={pos[0]:+.3f} Y={pos[1]:+.3f} Z={pos[2]:+.3f} | Ori: R={ori[0]:+.3f} P={ori[1]:+.3f} Y={ori[2]:+.3f}", end="")
+                    
+                    print()  # 줄바꿈
+                    last_print_time = current_time
+                    
+        except KeyboardInterrupt:
+            print("\n⚠️ 사용자에 의해 중단됨")
+        
+        print("🏁 VR 데이터 브릿지 종료")
+
+if __name__ == "__main__":
+    try:
+        bridge = VRDataBridge()
+        bridge.run()
+    except Exception as e:
+        print(f"❌ 오류: {e}")
+        import traceback
+        traceback.print_exc()
