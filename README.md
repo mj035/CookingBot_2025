@@ -18,7 +18,7 @@
 
 궁극적인 목표는 듀얼암 로봇 시스템으로 확장하여 샌드위치 제작과 같은 협업 요리 작업을 수행하는 것입니다.
 
-## 🏗️ 시스템 아키텍처
+## 시스템 아키텍처
 
 ```
 Meta Quest 2 (VR) → Docker (ROS1 + quest2ros) → Host (ROS2) → Physical Robot
