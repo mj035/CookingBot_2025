@@ -1,0 +1,4 @@
+ros2 launch open_manipulator_x_bringup hardware.launch.py port_name:=/dev/ttyACM0
+-> dynamixel xm430 350t -> id 11 12 13 14 15 / baud rate 1Mbps /wizard 2.0으로 id 탐색 후 설정 변경
+다른 팔 id 21 22 23 24 25 ? 이거 수정 가능?????????
+
