@@ -1,3 +1,0 @@
-ros2 launch open_manipulator_x_bringup hardware.launch.py port_name:=/dev/ttyACM0
-모터 아이디 11 12 13 14 15
-다른팔은 21 22 23 24 25 ? 이거 가능?
