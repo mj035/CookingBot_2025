@@ -1,6 +1,7 @@
 # Quest2ROS Docker Setup Guide
-
-## 팀원들을 위한 Docker 컨테이너 사용 가이드
+metaquest2 quest2ros앱이 ubuntu 20.04 ros1 noetic에서만 호환되므로
+host 환경이 ubuntu 22.04 ros2 humble이어서 도커 컨테이너로 컨트롤러 연결 및 pose값 받아옴.
+이 컨테이너에서 metaquest2 연결 및 브릿지.py 실행함.
 
 ### 1. 사전 준비
 ```bash
@@ -75,4 +76,3 @@ docker-compose logs quest2ros
 ### 6. 주의사항
 - 이 컨테이너는 ROS Noetic이 설치된 Ubuntu 20.04 환경입니다
 - VR 헤드셋 연결 시 USB 장치 권한이 필요할 수 있습니다
-- 컨테이너 내부에서 변경한 내용은 컨테이너 삭제 시 사라지므로, 중요한 파일은 호스트에 저장하세요
