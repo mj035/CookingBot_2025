@@ -27,7 +27,7 @@ docker-compose exec quest2ros bash
 #### Option B: 직접 Docker 명령 사용
 ```bash
 # 이미지 다운로드
-docker pull ghcr.io/mj035/quest2ros_fresh:latest
+docker pull mjo035/quest2ros_fresh:latest
 
 # 컨테이너 실행
 docker run -it --name quest2ros_fresh \
@@ -39,7 +39,7 @@ docker run -it --name quest2ros_fresh \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v $(pwd):/workspace \
   -v /dev:/dev \
-  ghcr.io/mj035/quest2ros_fresh:latest
+  mjo035/quest2ros_fresh:latest
 ```
 
 ### 3. 컨테이너 내부에서 사용법
