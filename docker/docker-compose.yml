@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   quest2ros:
-    image: ghcr.io/mj035/quest2ros_fresh:latest
+    image: mjo035/quest2ros_fresh:latest
     container_name: quest2ros_fresh
     privileged: true
     network_mode: host
