@@ -236,9 +236,9 @@ class DualMuJoCoController:
                 lo, hi = JOINT_LIMITS[k]
                 v = float(np.clip(ja[i], lo, hi))
                 
-                # 오른팔 Joint1만 반전
-                if side_name == "RIGHT" and k == 'j1':
-                    v = -v
+                # 오른팔 Joint1 반전 제거 (test3_dual.py와 동일하게)
+                # if side_name == "RIGHT" and k == 'j1':
+                #     v = -v
                     
                 if not (np.isnan(v) or np.isinf(v)):
                     self.data.ctrl[aid] = v
