@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<!-- Dual Arm OpenManipulator -->
+<robot name="dual_arm_open_manipulator" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:arg name="use_sim" default="false" />
+  <xacro:arg name="use_fake_hardware" default="false" />
+  <xacro:arg name="fake_sensor_commands" default="false" />
+  <xacro:arg name="port_name" default="/dev/ttyACM0" />
+
+  <!-- Import Rviz colors -->
+  <xacro:include filename="$(find open_manipulator_x_description)/gazebo/materials.xacro" />
+
+  <!-- Import all Gazebo-customization elements -->
+  <xacro:include filename="$(find open_manipulator_x_description)/gazebo/open_manipulator_x.gazebo.xacro" />
+
+  <!-- Import URDF -->
+  <xacro:include filename="$(find open_manipulator_x_description)/urdf/open_manipulator_x.urdf.xacro" />
+
+  <!-- Import dual arm ros2_control -->
+  <xacro:include filename="$(find open_manipulator_x_description)/ros2_control/dual_arm_system.ros2_control.xacro" />
+
+  <!-- Left Arm -->
+  <xacro:open_manipulator_x prefix="" />
+  <xacro:open_manipulator_x_gazebo prefix="" />
+
+  <!-- Right Arm (without duplicating dummy_mimic_fix link) -->
+  <xacro:open_manipulator_x prefix="right_" />
+
+  <!-- Dual Arm Control System -->
+  <xacro:dual_arm_system
+    name="DualArmSystem"
+    use_sim="$(arg use_sim)"
+    use_fake_hardware="$(arg use_fake_hardware)"
+    fake_sensor_commands="$(arg fake_sensor_commands)"
+    port_name="$(arg port_name)"/>
+
+  <!-- World -->
+  <link name="world"/>
+
+  <!-- Left arm fixed to world -->
+  <joint name="world_fixed" type="fixed">
+    <origin xyz="0 -0.2 0" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="link1"/>
+  </joint>
+
+  <!-- Right arm fixed to world -->
+  <joint name="right_world_fixed" type="fixed">
+    <origin xyz="0 0.2 0" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="right_link1"/>
+  </joint>
+
+</robot>

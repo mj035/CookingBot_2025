@@ -25,3 +25,11 @@ Meta Quest 2 (VR) → Docker (ROS1 + quest2ros) → Host (ROS2) → Physical Rob
                                   ↓
                              MuJoCo Simulation (verification)
 ```
+
+---
+
+## Dual Arm 제어 성공
+
+![Dual Arm Demo](assets/IMG_1862.gif)
+
+양팔 로봇 동시 제어 구현을 성공했고 앞으로는 움직임 개선 및 통신 문제 해결할 예정입니다.
