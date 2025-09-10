@@ -82,18 +82,8 @@ right_arm_controller:
 gripper_controller:
   ros__parameters:
     joint: gripper_left_joint
-    state_interfaces:
-      - position
-    command_interfaces:
-      - position
-    conversion_factor: 0.0001
 
 # Right gripper controller configuration
 right_gripper_controller:
   ros__parameters:
     joint: right_gripper_left_joint
-    state_interfaces:
-      - position
-    command_interfaces:
-      - position
-    conversion_factor: 0.0001

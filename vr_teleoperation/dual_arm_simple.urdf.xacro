@@ -7,7 +7,7 @@
   <xacro:arg name="port_name" default="/dev/ttyACM0" />
 
   <!-- Import dual arm ros2_control -->
-  <xacro:include filename="$(find open_manipulator_x_description)/ros2_control/dual_arm_system.ros2_control.xacro" />
+  <xacro:include filename="dual_arm_system.ros2_control.xacro" />
 
   <!-- Dual Arm Control System -->
   <xacro:dual_arm_system

@@ -71,13 +71,7 @@ def generate_launch_description():
         [
             PathJoinSubstitution([FindExecutable(name='xacro')]),
             ' ',
-            PathJoinSubstitution(
-                [
-                    FindPackageShare('open_manipulator_x_description'),
-                    'urdf',
-                    'dual_arm_simple.urdf.xacro'
-                ]
-            ),
+            '/home/minjae/CookingBot_2025/vr_teleoperation/dual_arm_simple.urdf.xacro',
             ' ',
             'use_sim:=',
             use_sim,
@@ -93,13 +87,7 @@ def generate_launch_description():
         ]
     )
 
-    controller_manager_config = PathJoinSubstitution(
-        [
-            FindPackageShare('open_manipulator_x_bringup'),
-            'config',
-            'dual_arm_controller_manager.yaml',
-        ]
-    )
+    controller_manager_config = '/home/minjae/CookingBot_2025/vr_teleoperation/dual_arm_controller_manager.yaml'
 
     rviz_config_file = PathJoinSubstitution(
         [
