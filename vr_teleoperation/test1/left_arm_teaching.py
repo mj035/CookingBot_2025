@@ -31,8 +31,15 @@ class LeftArmTeaching:
         self.LEFT_GRIPPER_ID = 15
         
         # 현재 위치
-        self.current_joints = [0.0] * 4
-        self.current_gripper = 0.0
+        self.current_joints = [0.0, 0.0, 0.0, 0.0]
+        self.current_gripper = 0.019
+        
+        # 오프셋 보정값 (실물 로봇 영점과 MuJoCo 영점의 차이)
+        # 실물이 [0, -0.43, 1.94, -0.42]일 때 MuJoCo는 [0, 0, 0, 0]이어야 함
+        self.joint_offsets = [0.0, -0.43, 1.94, -0.42]
+        
+        # 첫 전송 지연 플래그
+        self.first_read_done = False
         
         # MuJoCo 소켓
         self.mujoco_socket = None
@@ -132,7 +139,9 @@ class LeftArmTeaching:
                         self.port_handler, motor_id, self.ADDR_PRESENT_POSITION
                     )
                     if result == COMM_SUCCESS:
-                        self.current_joints[i] = self.value_to_radian(present_position)
+                        raw_value = self.value_to_radian(present_position)
+                        # 오프셋 보정 적용 (실물 값 - 오프셋 = MuJoCo 값)
+                        self.current_joints[i] = raw_value - self.joint_offsets[i]
                 
                 # 그리퍼 읽기
                 gripper_pos, result, error = self.packet_handler.read4ByteTxRx(
@@ -140,6 +149,12 @@ class LeftArmTeaching:
                 )
                 if result == COMM_SUCCESS:
                     self.current_gripper = self.value_to_radian(gripper_pos)
+                
+                # 첫 읽기 완료 표시
+                if not self.first_read_done:
+                    print("📊 오프셋 보정 적용됨")
+                    print(f"   보정 후: {[f'{j:.2f}' for j in self.current_joints]}")
+                    self.first_read_done = True
                 
                 # MuJoCo로 전송
                 self.send_to_mujoco()
@@ -151,7 +166,7 @@ class LeftArmTeaching:
                     print(f"⚠️ 읽기 오류: {e}")
     
     def send_to_mujoco(self):
-        """MuJoCo로 현재 조인트 값 전송"""
+        """MuJoCo로 현재 조인트 값 전송 (오프셋 보정됨)"""
         if self.mujoco_socket:
             try:
                 data = {
