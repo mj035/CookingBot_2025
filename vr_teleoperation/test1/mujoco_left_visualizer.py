@@ -58,10 +58,13 @@ class LeftArmVisualizer:
                 print(f"  ❌ {name} not found")
                 self.actuator_ids.append(-1)
         
-        # 로봇 상태
-        self.robot_joints = [0.0, 0.0, 0.0, 0.0]
+        # 로봇 상태 (초기 자세 설정)
+        self.robot_joints = [0.0, -0.3, 0.8, 0.0]  # 안정적인 초기 자세
         self.robot_gripper = -0.01
         self.data_received = False
+        
+        # 초기 자세 적용
+        self.set_initial_pose()
         
         # 소켓 서버
         self.setup_socket_server()
@@ -71,6 +74,19 @@ class LeftArmVisualizer:
         self.last_print_time = time.time()
         
         print("✅ 시각화 준비 완료\n")
+    
+    def set_initial_pose(self):
+        """초기 자세 설정"""
+        print("🤖 초기 자세 설정 중...")
+        for i, act_id in enumerate(self.actuator_ids):
+            if act_id >= 0:
+                self.data.ctrl[act_id] = self.robot_joints[i]
+        
+        # 시뮬레이션 스텝 실행하여 초기 자세 적용
+        for _ in range(100):
+            mujoco.mj_step(self.model, self.data)
+        
+        print("✅ 초기 자세 설정 완료")
     
     def setup_socket_server(self):
         """소켓 서버 설정"""
@@ -118,7 +134,18 @@ class LeftArmVisualizer:
                                         if 'left_arm' in msg:
                                             print(f"✅ left_arm 발견: {msg['left_arm'].keys()}")
                                             if 'joint_angles' in msg['left_arm']:
-                                                self.robot_joints = msg['left_arm']['joint_angles'][:4]
+                                                raw_joints = msg['left_arm']['joint_angles'][:4]
+                                                # 안전 범위 제한
+                                                safe_limits = [
+                                                    (-1.57, 1.57),  # Joint1: ±90도
+                                                    (-1.5, 1.5),    # Joint2
+                                                    (-1.5, 1.4),    # Joint3
+                                                    (-1.7, 1.97)    # Joint4
+                                                ]
+                                                self.robot_joints = [
+                                                    max(safe_limits[i][0], min(safe_limits[i][1], raw_joints[i]))
+                                                    for i in range(4)
+                                                ]
                                                 self.data_received = True
                                                 print(f"📡 받은 조인트: {[f'{j:.2f}' for j in self.robot_joints]}")
                                             if 'gripper' in msg['left_arm']:

@@ -91,20 +91,32 @@ class LeftArmTeaching:
     def connect_mujoco(self):
         """MuJoCo 소켓 연결"""
         print("🔌 MuJoCo 연결 시도 중...")
-        try:
-            self.mujoco_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.mujoco_socket.connect(('localhost', 12345))
-            print("🔗 MuJoCo 연결 성공 (포트 12345)")
-            
-            # 연결 테스트
-            test_data = {'test': 'connection'}
-            self.mujoco_socket.sendall((json.dumps(test_data) + '\n').encode())
-            print("✅ 연결 테스트 완료")
-            
-        except Exception as e:
-            print(f"⚠️ MuJoCo 연결 실패: {e}")
+        self.mujoco_socket = None
+        
+        # 포트 12345, 12346 순서로 시도
+        for port in [12345, 12346]:
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(2.0)  # 2초 타임아웃
+                sock.connect(('localhost', port))
+                print(f"🔗 MuJoCo 연결 성공 (포트 {port})")
+                
+                # 연결 테스트
+                test_data = {'test': 'connection'}
+                sock.sendall((json.dumps(test_data) + '\n').encode())
+                print("✅ 연결 테스트 완료")
+                
+                self.mujoco_socket = sock
+                break
+                
+            except Exception as e:
+                print(f"⚠️ 포트 {port} 연결 실패: {e}")
+                if sock:
+                    sock.close()
+        
+        if not self.mujoco_socket:
             print("💡 MuJoCo가 먼저 실행 중인지 확인하세요")
-            self.mujoco_socket = None
+            print("💡 또는 모든 프로세스 종료 후 재시작하세요")
     
     def value_to_radian(self, value):
         """Dynamixel 값을 라디안으로 변환"""
