@@ -90,12 +90,20 @@ class LeftArmTeaching:
     
     def connect_mujoco(self):
         """MuJoCo 소켓 연결"""
+        print("🔌 MuJoCo 연결 시도 중...")
         try:
             self.mujoco_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.mujoco_socket.connect(('localhost', 12345))
             print("🔗 MuJoCo 연결 성공 (포트 12345)")
-        except:
-            print("⚠️ MuJoCo 연결 실패 - MuJoCo 시각화 없이 진행")
+            
+            # 연결 테스트
+            test_data = {'test': 'connection'}
+            self.mujoco_socket.sendall((json.dumps(test_data) + '\n').encode())
+            print("✅ 연결 테스트 완료")
+            
+        except Exception as e:
+            print(f"⚠️ MuJoCo 연결 실패: {e}")
+            print("💡 MuJoCo가 먼저 실행 중인지 확인하세요")
             self.mujoco_socket = None
     
     def value_to_radian(self, value):
