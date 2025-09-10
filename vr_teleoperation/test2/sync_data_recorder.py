@@ -140,8 +140,15 @@ class SyncDataRecorder:
                     if line:
                         try:
                             msg = json.loads(line)
-                            if 'vr_controller' in msg:
+                            # vr_data 또는 vr_controller 키 모두 처리
+                            if 'vr_data' in msg:
+                                controller = msg['vr_data']
+                            elif 'vr_controller' in msg:
                                 controller = msg['vr_controller']
+                            else:
+                                controller = None
+                            
+                            if controller:
                                 if 'position' in controller:
                                     self.vr_position = controller['position']
                                 if 'orientation' in controller:
