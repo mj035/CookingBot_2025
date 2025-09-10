@@ -58,9 +58,9 @@ class LeftArmVisualizer:
                 print(f"  ❌ {name} not found")
                 self.actuator_ids.append(-1)
         
-        # 로봇 상태 (실물 로봇 실제 초기 자세)
-        self.robot_joints = [0.0, -0.43, 1.94, -0.42]  # 실측값
-        self.robot_gripper = -0.01  # 그리퍼는 MuJoCo 범위 유지
+        # 로봇 상태 (MuJoCo 초기 자세 - 모두 0)
+        self.robot_joints = [0.0, 0.0, 0.0, 0.0]  # 모든 조인트 0
+        self.robot_gripper = 0.019  # 그리퍼 열림
         self.data_received = False
         
         # 초기 자세 적용
