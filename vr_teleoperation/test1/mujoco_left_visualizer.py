@@ -75,10 +75,24 @@ class LeftArmVisualizer:
     def setup_socket_server(self):
         """소켓 서버 설정"""
         def server_thread():
-            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            server.bind(('localhost', 12345))
-            server.listen(1)
+            try:
+                server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                
+                # 포트가 사용 중이면 다른 포트 시도
+                try:
+                    server.bind(('localhost', 12345))
+                except OSError as e:
+                    print(f"⚠️ 포트 12345 사용 중: {e}")
+                    print("💡 포트 12346 시도...")
+                    server.bind(('localhost', 12346))
+                    print("✅ 포트 12346 사용")
+                    
+                server.listen(1)
+                print("📡 소켓 서버 시작됨")
+            except Exception as e:
+                print(f"❌ 서버 시작 실패: {e}")
+                return
             
             while True:
                 try:
