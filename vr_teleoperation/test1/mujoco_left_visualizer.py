@@ -96,17 +96,23 @@ class LeftArmVisualizer:
                             while '\n' in buffer:
                                 line, buffer = buffer.split('\n', 1)
                                 if line:
+                                    print(f"📥 원본 데이터: {line[:100]}")  # 원본 데이터 확인
                                     try:
                                         msg = json.loads(line)
+                                        print(f"🔍 파싱된 키: {msg.keys()}")  # 키 확인
+                                        
                                         if 'left_arm' in msg:
+                                            print(f"✅ left_arm 발견: {msg['left_arm'].keys()}")
                                             if 'joint_angles' in msg['left_arm']:
                                                 self.robot_joints = msg['left_arm']['joint_angles'][:4]
                                                 self.data_received = True
-                                                print(f"📡 받은 조인트: {[f'{j:.2f}' for j in self.robot_joints]}")  # 디버그
+                                                print(f"📡 받은 조인트: {[f'{j:.2f}' for j in self.robot_joints]}")
                                             if 'gripper' in msg['left_arm']:
                                                 self.robot_gripper = msg['left_arm']['gripper']
-                                    except json.JSONDecodeError:
-                                        pass
+                                        else:
+                                            print(f"⚠️ left_arm 키 없음")
+                                    except json.JSONDecodeError as e:
+                                        print(f"❌ JSON 파싱 오류: {e}")
                         except socket.timeout:
                             continue
                         except Exception as e:
