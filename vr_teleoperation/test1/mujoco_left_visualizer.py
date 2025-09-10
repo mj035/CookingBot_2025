@@ -17,25 +17,46 @@ class LeftArmVisualizer:
         print("🎮 MuJoCo Left Arm Visualizer")
         print("📡 실물 로봇 데이터 대기 중... (포트 12345)")
         
-        # MuJoCo 모델 로드 (왼팔만 사용)
-        self.model = mujoco.MjModel.from_xml_path('../single_arm/omx.xml')
+        # MuJoCo 모델 로드 (scene.xml 사용)
+        self.model = mujoco.MjModel.from_xml_path('../single_arm/scene.xml')
         self.data = mujoco.MjData(self.model)
         
         # 조인트 인덱스 찾기
         self.joint_ids = []
+        print("\n=== 조인트 매핑 ===")
         for i in range(1, 5):
             try:
                 joint_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_JOINT, f'joint{i}')
                 self.joint_ids.append(joint_id)
-                print(f"  Joint{i} ID: {joint_id}")
+                print(f"  ✅ Joint{i} → ID: {joint_id}")
             except:
-                print(f"  Joint{i} not found")
+                print(f"  ❌ Joint{i} not found")
+                self.joint_ids.append(-1)
+        
+        # 모든 조인트 이름 출력
+        print("\n=== 사용 가능한 조인트 ===")
+        for i in range(self.model.njnt):
+            name = mujoco.mj_id2name(self.model, mujoco.mjtObj.mjOBJ_JOINT, i)
+            print(f"  ID {i}: {name}")
         
         # 그리퍼 조인트
         try:
             self.gripper_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_JOINT, 'gripper_joint')
         except:
             self.gripper_id = -1
+        
+        # 액추에이터 매핑 (중요!)
+        self.actuator_ids = []
+        print("\n=== 액추에이터 매핑 ===")
+        actuator_names = ['actuator_joint1', 'actuator_joint2', 'actuator_joint3', 'actuator_joint4']
+        for name in actuator_names:
+            try:
+                act_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
+                self.actuator_ids.append(act_id)
+                print(f"  ✅ {name} → ID: {act_id}")
+            except:
+                print(f"  ❌ {name} not found")
+                self.actuator_ids.append(-1)
         
         # 로봇 상태
         self.robot_joints = [0.0, 0.0, 0.0, 0.0]
@@ -81,6 +102,7 @@ class LeftArmVisualizer:
                                             if 'joint_angles' in msg['left_arm']:
                                                 self.robot_joints = msg['left_arm']['joint_angles'][:4]
                                                 self.data_received = True
+                                                print(f"📡 받은 조인트: {[f'{j:.2f}' for j in self.robot_joints]}")  # 디버그
                                             if 'gripper' in msg['left_arm']:
                                                 self.robot_gripper = msg['left_arm']['gripper']
                                     except json.JSONDecodeError:
@@ -108,14 +130,20 @@ class LeftArmVisualizer:
             viewer.cam.azimuth = 135
             
             while viewer.is_running():
-                # 로봇 조인트 값 적용
-                for i, joint_id in enumerate(self.joint_ids):
-                    if joint_id >= 0 and i < len(self.robot_joints):
-                        self.data.qpos[joint_id] = self.robot_joints[i]
+                # 액추에이터를 통한 제어 (중요!)
+                for i, act_id in enumerate(self.actuator_ids):
+                    if act_id >= 0 and i < len(self.robot_joints):
+                        self.data.ctrl[act_id] = self.robot_joints[i]
+                        # 디버그: 실제 적용되는 값 확인
+                        if self.data_received and self.frame_count % 60 == 0:
+                            print(f"  제어: Actuator{i+1}(ID:{act_id}) = {self.robot_joints[i]:.3f}")
                 
-                # 그리퍼 적용
-                if self.gripper_id >= 0:
-                    self.data.qpos[self.gripper_id] = self.robot_gripper
+                # 그리퍼 액추에이터
+                try:
+                    gripper_act_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_ACTUATOR, 'actuator_gripper_joint')
+                    self.data.ctrl[gripper_act_id] = self.robot_gripper
+                except:
+                    pass
                 
                 # 시뮬레이션 스텝
                 mujoco.mj_step(self.model, self.data)
