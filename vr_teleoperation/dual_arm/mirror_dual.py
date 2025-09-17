@@ -117,14 +117,28 @@ class DualArmOffsetMirror(Node):
         # 왼쪽 로봇 초기값 저장
         if self.robot_initial['left'] is None:
             self.robot_initial['left'] = []
-            for name in ['joint1', 'joint2', 'joint3', 'joint4']:
-                for i, n in enumerate(msg.name):
-                    if name == n:  # 정확히 일치하는 이름
-                        self.robot_initial['left'].append(msg.position[i])
-                        break
+            # 실제 순서: joint1(idx7), joint2(idx8), joint3(idx1), joint4(idx5)
+            left_joint_indices = {}
             
+            for i, name in enumerate(msg.name):
+                if name == 'joint1':
+                    left_joint_indices['joint1'] = i
+                elif name == 'joint2':
+                    left_joint_indices['joint2'] = i
+                elif name == 'joint3':
+                    left_joint_indices['joint3'] = i
+                elif name == 'joint4':
+                    left_joint_indices['joint4'] = i
+            
+            # 올바른 순서로 저장
+            for joint_name in ['joint1', 'joint2', 'joint3', 'joint4']:
+                if joint_name in left_joint_indices:
+                    idx = left_joint_indices[joint_name]
+                    self.robot_initial['left'].append(msg.position[idx])
+                    
             if len(self.robot_initial['left']) == 4:
                 print(f"✅ 왼쪽 로봇 초기값: {[f'{x:.3f}' for x in self.robot_initial['left']]}")
+                print(f"   (인덱스: j1={left_joint_indices.get('joint1')}, j2={left_joint_indices.get('joint2')}, j3={left_joint_indices.get('joint3')}, j4={left_joint_indices.get('joint4')})")
                 self.robot_status['left_connected'] = True
         
         # 오른쪽 로봇 초기값 저장
