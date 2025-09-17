@@ -36,8 +36,8 @@ class RightArmTeaching:
         self.current_gripper = 0.019
 
         # 오프셋 보정값 - 오른팔 실측값!
-        # 실물 [0.61, -0.36, 1.84, -0.46] - MuJoCo표시 [-0.02, -0.52, -0.47, -0.54] = 오프셋
-        self.joint_offsets = [0.63, 0.16, 2.31, 0.08]
+        # 실물이 [0.61, -0.36, 1.84, -0.46]일 때 MuJoCo는 [0, 0, 0, 0]
+        self.joint_offsets = [0.61, -0.36, 1.84, -0.46]
 
         # 첫 전송 지연 플래그
         self.first_read_done = False
