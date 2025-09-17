@@ -35,8 +35,9 @@ class RightArmTeaching:
         self.current_joints = [0.0, 0.0, 0.0, 0.0]
         self.current_gripper = 0.019
 
-        # 오프셋 보정값 - 왼팔과 동일한 값 사용!
-        self.joint_offsets = [0.0, -0.43, 1.94, -0.42]
+        # 오프셋 보정값 - 오른팔 실측값!
+        # 실물이 [0.61, -0.52, -0.98, -1.64]일 때 MuJoCo는 [0, 0, 0, 0]
+        self.joint_offsets = [0.61, -0.52, -0.98, -1.64]
 
         # 첫 전송 지연 플래그
         self.first_read_done = False
@@ -57,7 +58,7 @@ class RightArmTeaching:
 
         print("\n✅ 시스템 준비 완료!")
         print("🖐 오른팔을 천천히 움직여보세요\n")
-        print(f"📊 왼팔 오프셋 적용: {self.joint_offsets}\n")
+        print(f"📊 오른팔 오프셋 적용: {self.joint_offsets}\n")
 
     def setup_dynamixel(self):
         """Dynamixel 초기화 및 토크 해제"""
