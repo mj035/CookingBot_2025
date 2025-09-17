@@ -441,6 +441,9 @@ class DualArmIntuitiveVRBridge:
         x_delta = vr_pos_delta[0]
         z_delta = vr_pos_delta[2]
         
+        # 팔 뻗기 거리 계산 (디버그 출력에서 사용)
+        reach_distance = np.sqrt(x_delta**2 + z_delta**2)
+        
         # === 새 데이터 기반 X축 매핑 (상관계수 0.94) ===
         # X와 J2는 강한 양의 상관관계
         # X와 J3는 중간 음의 상관관계 + Z 영향
