@@ -45,7 +45,7 @@ class MuJoCoKeyboardController(Node):
 
         print("🎮 MuJoCo Keyboard Control Test (Quick Start)")
         print("⚠️  실물 로봇이 안전 위치에 있는지 확인하세요!")
-        print("📊 목표 초기 자세: J2=-0.3, J3=0.8\n")
+        print("📊 목표 초기 자세: 모든 조인트 0 (완전 중립)\n")
 
         # MuJoCo 모델 로드
         self.model = mujoco.MjModel.from_xml_path(XML_SCENE_PATH)
@@ -55,9 +55,9 @@ class MuJoCoKeyboardController(Node):
         self.left_map = self._map_actuators(side="L")
         self.right_map = self._map_actuators(side="R")
 
-        # 현재 조인트 값
-        self.left_joints = [0.0, -0.3, 0.8, 0.0]
-        self.right_joints = [0.0, -0.3, 0.8, 0.0]
+        # 현재 조인트 값 (완전 중립 자세 - MuJoCo 좌표)
+        self.left_joints = [0.0, 0.0, 0.0, 0.0]
+        self.right_joints = [0.0, 0.0, 0.0, 0.0]
         self.left_gripper = -0.01
         self.right_gripper = -0.01
 
@@ -213,10 +213,10 @@ class MuJoCoKeyboardController(Node):
 
         # 리셋
         elif key == 'r':
-            self.left_joints = [0.0, -0.3, 0.8, 0.0]
-            self.right_joints = [0.0, -0.3, 0.8, 0.0]
+            self.left_joints = [0.0, 0.0, 0.0, 0.0]
+            self.right_joints = [0.0, 0.0, 0.0, 0.0]
             self.update_mujoco()
-            print("🔄 초기 자세로 리셋")
+            print("🔄 중립 자세로 리셋 (0,0,0,0)")
 
         # 도움말
         elif key == 'h':
