@@ -172,7 +172,7 @@ class DualArmCalibratedMirror(Node):
                     print("🔗 MuJoCo 연결됨")
 
                     buffer = ""
-                    # first 플래그 제거 - 각 팔 독립적 초기화
+                    first = True  # 초기화 플래그
                     while True:
                         try:
                             data = sock.recv(4096).decode('utf-8')
