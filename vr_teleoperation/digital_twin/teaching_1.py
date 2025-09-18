@@ -2,6 +2,7 @@
 """
 양팔 Direct Teaching - 실물 양팔을 동시에 MuJoCo와 동기화
 토크 OFF 상태로 양팔 데이터 수집
+오른팔 오프셋 수정 버전
 """
 
 import socket
@@ -13,7 +14,7 @@ from datetime import datetime
 
 class DualArmTeaching:
     def __init__(self):
-        print("\n🎓 Dual Arm Direct Teaching Mode")
+        print("\n🎓 Dual Arm Direct Teaching Mode (수정된 오프셋)")
         print("📍 양팔을 손으로 움직이면 MuJoCo가 실시간으로 따라옵니다")
         print("💾 Space: 현재 자세 저장 | Q: 종료\n")
 
@@ -38,9 +39,13 @@ class DualArmTeaching:
         self.right_joints = [0.0, 0.0, 0.0, 0.0]
         self.right_gripper = 0.019
 
-        # 오프셋 보정값
+        # 오프셋 보정값 (오른팔 수정됨!)
         self.left_offsets = [0.0, -0.43, 1.94, -0.42]
-        self.right_offsets = [0.0, -0.43, 1.94, -0.42]  # 실측값으로 변경 필요
+        self.right_offsets = [0.66, -1.03, 0.96, -2.07]  # 실측값으로 수정됨
+
+        print("📊 적용된 오프셋:")
+        print(f"   왼팔:  {self.left_offsets}")
+        print(f"   오른팔: {self.right_offsets}\n")
 
         # 첫 전송 지연 플래그
         self.first_read_done = False
@@ -170,8 +175,8 @@ class DualArmTeaching:
                 # 첫 읽기 완료 표시
                 if not self.first_read_done:
                     print("📊 양팔 오프셋 보정 적용됨")
-                    print(f"   왼팔: {[f'{j:.2f}' for j in self.left_joints]}")
-                    print(f"   오른팔: {[f'{j:.2f}' for j in self.right_joints]}")
+                    print(f"   왼팔 보정 후:  {[f'{j:.2f}' for j in self.left_joints]}")
+                    print(f"   오른팔 보정 후: {[f'{j:.2f}' for j in self.right_joints]}")
                     self.first_read_done = True
 
                 # MuJoCo로 전송
