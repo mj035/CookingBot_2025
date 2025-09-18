@@ -27,11 +27,11 @@ class DualArmCalibratedMirror(Node):
         print("   2. 실물 로봇도 동일한 자세로")
         print("   3. 미러링 시작\n")
 
-        # 오프셋 값 (teaching_1.py 기반)
+        # 오프셋 값 (Wizard 측정 기반)
         # MuJoCo [0,0,0,0]일 때 실물이 가져야 할 값
         self.HARDWARE_ZERO_POSE = {
-            'left': [0.0, -0.43, 1.94, -0.42],
-            'right': [0.66, -1.03, 0.96, -2.07]
+            'left': [0.034, 0.376, 1.853, -0.176],
+            'right': [0.634, -0.887, 0.841, -2.163]
         }
 
         print("📊 MuJoCo [0,0,0,0]에 해당하는 하드웨어 값:")
@@ -172,7 +172,7 @@ class DualArmCalibratedMirror(Node):
                     print("🔗 MuJoCo 연결됨")
 
                     buffer = ""
-                    first = True
+                    # first 플래그 제거 - 각 팔 독립적 초기화
                     while True:
                         try:
                             data = sock.recv(4096).decode('utf-8')
