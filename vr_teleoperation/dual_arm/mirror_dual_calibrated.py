@@ -78,6 +78,9 @@ class DualArmCalibratedMirror(Node):
         self.left_ready = False
         self.right_ready = False
 
+        # Thread safety를 위한 Lock 추가
+        self.data_lock = threading.Lock()
+
         # ROS2 Publishers
         self.left_joint_pub = self.create_publisher(
             JointTrajectory, '/arm_controller/joint_trajectory', 10)
@@ -182,32 +185,34 @@ class DualArmCalibratedMirror(Node):
                                     try:
                                         d = json.loads(line)
 
-                                        # 왼팔 데이터
-                                        if 'left_arm' in d and 'joint_angles' in d['left_arm']:
-                                            self.mujoco_current['left'] = d['left_arm']['joint_angles'][:4]
-                                            if first and self.mujoco_initial['left'] is None:
-                                                self.mujoco_initial['left'] = self.mujoco_current['left'].copy()
-                                                print(f"✅ MuJoCo 왼팔 초기값: {[f'{x:.3f}' for x in self.mujoco_initial['left']]}")
+                                        # Thread safety를 위해 Lock 사용
+                                        with self.data_lock:
+                                            # 왼팔 데이터
+                                            if 'left_arm' in d and 'joint_angles' in d['left_arm']:
+                                                self.mujoco_current['left'] = d['left_arm']['joint_angles'][:4]
+                                                if first and self.mujoco_initial['left'] is None:
+                                                    self.mujoco_initial['left'] = self.mujoco_current['left'].copy()
+                                                    print(f"✅ MuJoCo 왼팔 초기값: {[f'{x:.3f}' for x in self.mujoco_initial['left']]}")
 
-                                        if 'left_arm' in d and 'gripper' in d['left_arm']:
-                                            self.gripper_values['left'] = d['left_arm']['gripper']
+                                            if 'left_arm' in d and 'gripper' in d['left_arm']:
+                                                self.gripper_values['left'] = d['left_arm']['gripper']
 
-                                        # 오른팔 데이터
-                                        if 'right_arm' in d and 'joint_angles' in d['right_arm']:
-                                            self.mujoco_current['right'] = d['right_arm']['joint_angles'][:4]
-                                            if first and self.mujoco_initial['right'] is None:
-                                                self.mujoco_initial['right'] = self.mujoco_current['right'].copy()
-                                                print(f"✅ MuJoCo 오른팔 초기값: {[f'{x:.3f}' for x in self.mujoco_initial['right']]}")
+                                            # 오른팔 데이터
+                                            if 'right_arm' in d and 'joint_angles' in d['right_arm']:
+                                                self.mujoco_current['right'] = d['right_arm']['joint_angles'][:4]
+                                                if first and self.mujoco_initial['right'] is None:
+                                                    self.mujoco_initial['right'] = self.mujoco_current['right'].copy()
+                                                    print(f"✅ MuJoCo 오른팔 초기값: {[f'{x:.3f}' for x in self.mujoco_initial['right']]}")
 
                                                 # MuJoCo 초기값 확인
                                                 if (max(abs(x) for x in self.mujoco_initial['left']) > 0.1 or
                                                     max(abs(x) for x in self.mujoco_initial['right']) > 0.1):
                                                     print("⚠️  MuJoCo 초기값이 [0,0,0,0]이 아닙니다! VR 캘리브레이션을 확인하세요.")
 
-                                                first = False
+                                                    first = False
 
-                                        if 'right_arm' in d and 'gripper' in d['right_arm']:
-                                            self.gripper_values['right'] = d['right_arm']['gripper']
+                                            if 'right_arm' in d and 'gripper' in d['right_arm']:
+                                                self.gripper_values['right'] = d['right_arm']['gripper']
 
                                     except json.JSONDecodeError:
                                         continue
@@ -288,17 +293,23 @@ class DualArmCalibratedMirror(Node):
 
     def dual_arm_control(self):
         """양팔 제어 (캘리브레이션 적용)"""
+        # Thread safety를 위해 Lock 사용하여 데이터 읽기
+        with self.data_lock:
+            mujoco_left = self.mujoco_current['left'].copy()
+            mujoco_right = self.mujoco_current['right'].copy()
+            gripper_left = self.gripper_values['left']
+            gripper_right = self.gripper_values['right']
+
         # 왼팔 제어
         if self.left_ready and self.mujoco_initial['left'] is not None:
             # MuJoCo 변화량 계산
             left_target = []
             for i in range(4):
                 # MuJoCo 변화량
-                mujoco_delta = self.mujoco_current['left'][i] - self.mujoco_initial['left'][i]
+                mujoco_delta = mujoco_left[i] - self.mujoco_initial['left'][i]
 
-                # 실물 목표 = 초기값 + 변화량 + 캘리브레이션 보정
-                # 캘리브레이션 오차는 이미 robot_initial에 포함됨
-                target = self.robot_initial['left'][i] + mujoco_delta
+                # 올바른 제어 공식: 이상적인 초기값 + MuJoCo 변화량
+                target = self.HARDWARE_ZERO_POSE['left'][i] + mujoco_delta
                 left_target.append(target)
 
             # 안전 및 스무딩
@@ -309,9 +320,9 @@ class DualArmCalibratedMirror(Node):
             self.left_joint_pub.publish(left_traj)
 
             # 그리퍼
-            if abs(self.gripper_values['left'] - self.last_gripper_values['left']) > 0.002:
-                self.send_gripper_goal(self.gripper_values['left'], 'left')
-                self.last_gripper_values['left'] = self.gripper_values['left']
+            if abs(gripper_left - self.last_gripper_values['left']) > 0.002:
+                self.send_gripper_goal(gripper_left, 'left')
+                self.last_gripper_values['left'] = gripper_left
 
         # 오른팔 제어
         if self.right_ready and self.mujoco_initial['right'] is not None:
@@ -319,10 +330,10 @@ class DualArmCalibratedMirror(Node):
             right_target = []
             for i in range(4):
                 # MuJoCo 변화량
-                mujoco_delta = self.mujoco_current['right'][i] - self.mujoco_initial['right'][i]
+                mujoco_delta = mujoco_right[i] - self.mujoco_initial['right'][i]
 
-                # 실물 목표 = 초기값 + 변화량
-                target = self.robot_initial['right'][i] + mujoco_delta
+                # 올바른 제어 공식: 이상적인 초기값 + MuJoCo 변화량
+                target = self.HARDWARE_ZERO_POSE['right'][i] + mujoco_delta
                 right_target.append(target)
 
             # 안전 및 스무딩
@@ -333,9 +344,9 @@ class DualArmCalibratedMirror(Node):
             self.right_joint_pub.publish(right_traj)
 
             # 그리퍼
-            if abs(self.gripper_values['right'] - self.last_gripper_values['right']) > 0.002:
-                self.send_gripper_goal(self.gripper_values['right'], 'right')
-                self.last_gripper_values['right'] = self.gripper_values['right']
+            if abs(gripper_right - self.last_gripper_values['right']) > 0.002:
+                self.send_gripper_goal(gripper_right, 'right')
+                self.last_gripper_values['right'] = gripper_right
 
         self.control_count += 1
 
