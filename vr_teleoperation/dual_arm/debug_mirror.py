@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-미러 코드 디버깅 - 첫 제어 시점 확인
+미러 코드 디버깅 - mirror_dual.py와 동일 동작 + 로그만 추가
+기존 코드 그대로, 왼팔 첫 제어 시점 로그만 출력
 """
 
 import rclpy
@@ -165,8 +166,53 @@ class DebugMirror(Node):
 
         threading.Thread(target=recv, daemon=True).start()
 
+    def apply_safety_limits(self, joints, arm_side='left'):
+        """안전 제한 적용 (mirror_dual.py와 동일)"""
+        joint_limits = [
+            [-3.14, 3.14],   # Joint 1
+            [-1.5, 1.5],     # Joint 2
+            [-1.5, 1.4],     # Joint 3
+            [-1.7, 1.97]     # Joint 4
+        ]
+
+        safe_joints = []
+        for i, (joint_val, limits) in enumerate(zip(joints, joint_limits)):
+            # 급격한 변화 제한 (0.1 라디안/스텝)
+            max_change = 0.1
+            if hasattr(self, f'last_{arm_side}_joints'):
+                last_joints = getattr(self, f'last_{arm_side}_joints')
+                if len(last_joints) > i:
+                    change = joint_val - last_joints[i]
+                    if abs(change) > max_change:
+                        joint_val = last_joints[i] + np.sign(change) * max_change
+
+            # 조인트 범위 제한
+            safe_joint = np.clip(joint_val, limits[0], limits[1])
+            safe_joints.append(safe_joint)
+
+        # 현재 조인트 저장
+        setattr(self, f'last_{arm_side}_joints', safe_joints.copy())
+        return safe_joints
+
+    def create_joint_trajectory(self, target_joints, arm_side='left'):
+        """조인트 궤적 메시지 생성 (mirror_dual.py와 동일)"""
+        traj = JointTrajectory()
+        traj.header.stamp = self.get_clock().now().to_msg()
+
+        if arm_side == 'right':
+            traj.joint_names = ['right_joint1', 'right_joint2', 'right_joint3', 'right_joint4']
+        else:
+            traj.joint_names = ['joint1', 'joint2', 'joint3', 'joint4']
+
+        point = JointTrajectoryPoint()
+        point.positions = target_joints
+        point.time_from_start = Duration(sec=0, nanosec=100000000)  # 100ms
+
+        traj.points = [point]
+        return traj
+
     def debug_control(self):
-        """디버깅 제어"""
+        """디버깅 제어 (mirror_dual.py의 dual_arm_control과 동일)"""
         # 왼팔 제어
         if (self.robot_initial['left'] is not None and
             self.mujoco_initial['left'] is not None):
@@ -185,7 +231,11 @@ class DebugMirror(Node):
                 print(f"  하드웨어 초기: {[f'{x:.3f}' for x in self.robot_initial['left']]}")
                 print(f"  MuJoCo 초기: {[f'{x:.3f}' for x in self.mujoco_initial['left']]}")
                 print(f"  MuJoCo 현재: {[f'{x:.3f}' for x in self.mujoco_current['left']]}")
-                print(f"  변화량: {[f'{self.mujoco_current["left"][i] - self.mujoco_initial["left"][i]:.3f}' for i in range(4)]}")
+                delta_values = []
+                for i in range(4):
+                    delta = self.mujoco_current['left'][i] - self.mujoco_initial['left'][i]
+                    delta_values.append(f'{delta:.3f}')
+                print(f"  변화량: {delta_values}")
                 print(f"  목표값(클리핑 전): {[f'{x:.3f}' for x in left_target]}")
 
                 # 안전 제한 체크
@@ -209,19 +259,14 @@ class DebugMirror(Node):
                 print("=" * 60)
                 self.first_control['left'] = False
 
-                # 실제 전송
-                traj = JointTrajectory()
-                traj.header.stamp = self.get_clock().now().to_msg()
-                traj.joint_names = ['joint1', 'joint2', 'joint3', 'joint4']
+            # 기존 코드와 동일하게 안전 제한 적용
+            safe_left_target = self.apply_safety_limits(left_target, 'left')
 
-                point = JointTrajectoryPoint()
-                point.positions = clipped_target
-                point.time_from_start = Duration(sec=0, nanosec=100000000)
+            # 궤적 생성 및 전송
+            left_traj = self.create_joint_trajectory(safe_left_target, 'left')
+            self.left_joint_pub.publish(left_traj)
 
-                traj.points = [point]
-                self.left_joint_pub.publish(traj)
-
-        # 오른팔 제어 (동일 로직)
+        # 오른팔 제어 (mirror_dual.py와 완전히 동일, 로그 없음)
         if (self.robot_initial['right'] is not None and
             self.mujoco_initial['right'] is not None):
 
@@ -231,11 +276,12 @@ class DebugMirror(Node):
                 target_val = self.robot_initial['right'][i] + delta
                 right_target.append(target_val)
 
-            if self.first_control['right']:
-                print("\n🎯 오른팔 첫 제어 시점 분석:")
-                print(f"  하드웨어 초기: {[f'{x:.3f}' for x in self.robot_initial['right']]}")
-                print(f"  목표값: {[f'{x:.3f}' for x in right_target]}")
-                self.first_control['right'] = False
+            # 안전 제한 적용
+            safe_right_target = self.apply_safety_limits(right_target, 'right')
+
+            # 궤적 생성 및 전송
+            right_traj = self.create_joint_trajectory(safe_right_target, 'right')
+            self.right_joint_pub.publish(right_traj)
 
 def main():
     rclpy.init()
