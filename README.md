@@ -40,7 +40,7 @@ Meta Quest 2 (VR) → Docker (ROS1 + quest2ros) → Host (ROS2) → Physical Rob
 docker컨테이너 실행후 메타퀘스트 연결후 dual_arm_bridge_improved.py (vr_teleoperation 폴더 -> dual_arm폴더에 있습니다)
 저장 후 실행
 
-mujoco_mirror.py(무주코 파일) mirror_dual_safe.py(미러링 코드) vr폴더 - dual_arm폴더에 있습니다
+mujoco_mirror.py(무주코 파일) mirror_dual_last.py(미러링 코드) vr폴더 - dual_arm폴더에 있습니다
 
 도커에서 브릿지 파일 실행한 상태에서 호스트에서 무주코 파일 실행시켜 텔레오퍼레이션 확인 및 캘리브레이션 시켜 초기자세 확인
 
