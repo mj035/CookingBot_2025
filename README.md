@@ -34,3 +34,40 @@ Meta Quest 2 (VR) → Docker (ROS1 + quest2ros) → Host (ROS2) → Physical Rob
 
 양팔 로봇 동시 제어 구현을 성공했고 wifi 도시락을 사용해서 장소 제한 없이 구현 가능하도록 개선했습니다.
 
+---
+
+## 시작하기
+
+### 필수 환경
+- Ubuntu 22.04
+- ROS2 Humble
+- MuJoCo 2.3+
+- Docker (quest2ros)
+- Meta Quest 2 + quest2ros 앱
+
+### 프로젝트 구조
+
+```
+CookingBot_2025/
+├── vr_teleoperation/      # VR 텔레오퍼레이션 시스템
+│   ├── single_arm/        # 싱글암 제어 코드
+│   └── dual_arm/          # 듀얼암 제어 코드
+├── open_manipulator/      # ROS2 하드웨어 설정
+├── data/                  # 데이터 수집 도구
+├── docker/                # Docker 설정
+└── examples/              # 예제 코드
+```
+
+### 빠른 시작
+
+1. **하드웨어 설정**
+   - OpenManipulator-X 연결 및 설정은 [하드웨어 가이드](open_manipulator/HARDWARE_SETUP_GUIDE.md) 참조
+
+2. **VR 시스템 실행**
+   - Single Arm: [싱글암 가이드](vr_teleoperation/single_arm) 참조
+   - Dual Arm: [듀얼암 가이드](vr_teleoperation/dual_arm) 참조
+   - 자세한 사용법은 [VR 시스템 문서](vr_teleoperation/README.md)
+
+3. **데이터 수집**
+   - VR-로봇 매핑 데이터 수집: [데이터 수집 가이드](data/README.md) 참조
+
