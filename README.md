@@ -32,4 +32,5 @@ Meta Quest 2 (VR) → Docker (ROS1 + quest2ros) → Host (ROS2) → Physical Rob
 
 ![Dual Arm Demo](assets/IMG_1862.gif)
 
+양팔 로봇 동시 제어 구현을 성공했고 wifi 도시락을 사용해서 장소 제한 없이 구현 가능하도록 개선했습니다.
 

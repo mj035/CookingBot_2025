@@ -1,0 +1,183 @@
+<?xml version="1.0"?>
+<!-- Simplified Dual Arm OpenManipulator -->
+<robot name="dual_arm_open_manipulator" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:arg name="use_sim" default="false" />
+  <xacro:arg name="use_fake_hardware" default="false" />
+  <xacro:arg name="fake_sensor_commands" default="false" />
+  <xacro:arg name="port_name" default="/dev/ttyACM0" />
+
+  <!-- Import dual arm ros2_control -->
+  <xacro:include filename="dual_arm_system.ros2_control.xacro" />
+
+  <!-- Dual Arm Control System -->
+  <xacro:dual_arm_system
+    name="DualArmSystem"
+    use_sim="$(arg use_sim)"
+    use_fake_hardware="$(arg use_fake_hardware)"
+    fake_sensor_commands="$(arg fake_sensor_commands)"
+    port_name="$(arg port_name)"/>
+
+  <!-- World -->
+  <link name="world"/>
+
+  <!-- Left Arm Links -->
+  <link name="link1"/>
+  <link name="link2"/>
+  <link name="link3"/>
+  <link name="link4"/>
+  <link name="link5"/>
+  <link name="gripper_left_link"/>
+  <link name="gripper_right_link"/>
+  <link name="end_effector_link"/>
+  
+  <!-- Right Arm Links -->
+  <link name="right_link1"/>
+  <link name="right_link2"/>
+  <link name="right_link3"/>
+  <link name="right_link4"/>
+  <link name="right_link5"/>
+  <link name="right_gripper_left_link"/>
+  <link name="right_gripper_right_link"/>
+  <link name="right_end_effector_link"/>
+  
+  <!-- Dummy links for gripper mimic -->
+  <link name="dummy_mimic_fix_left"/>
+  <link name="dummy_mimic_fix_right"/>
+
+  <!-- Left arm joints -->
+  <joint name="world_fixed" type="fixed">
+    <origin xyz="0 -0.2 0" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="link1"/>
+  </joint>
+
+  <joint name="joint1" type="revolute">
+    <parent link="link1"/>
+    <child link="link2"/>
+    <origin xyz="0.012 0.0 0.017" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit velocity="4.8" effort="1" lower="${-pi*0.9}" upper="${pi*0.9}" />
+  </joint>
+
+  <joint name="joint2" type="revolute">
+    <parent link="link2"/>
+    <child link="link3"/>
+    <origin xyz="0.0 0.0 0.058" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit velocity="4.8" effort="1" lower="${-pi*0.57}" upper="${pi*0.5}" />
+  </joint>
+
+  <joint name="joint3" type="revolute">
+    <parent link="link3"/>
+    <child link="link4"/>
+    <origin xyz="0.024 0 0.128" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit velocity="4.8" effort="1" lower="${-pi*0.3}" upper="${pi*0.44}" />
+  </joint>
+
+  <joint name="joint4" type="revolute">
+    <parent link="link4"/>
+    <child link="link5"/>
+    <origin xyz="0.124 0.0 0.0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit velocity="4.8" effort="1" lower="${-pi*0.57}" upper="${pi*0.65}" />
+  </joint>
+
+  <joint name="gripper_left_joint" type="prismatic">
+    <parent link="link5"/>
+    <child link="gripper_left_link"/>
+    <origin xyz="0.0595 0.0145 0.0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit velocity="4.8" effort="10" lower="-0.010" upper="0.019" />
+  </joint>
+
+  <joint name="gripper_right_joint" type="prismatic">
+    <parent link="link5"/>
+    <child link="gripper_right_link"/>
+    <origin xyz="0.0595 -0.0145 0.0" rpy="0 0 0"/>
+    <axis xyz="0 -1 0"/>
+    <limit velocity="4.8" effort="10" lower="-0.010" upper="0.019" />
+    <mimic joint="gripper_left_joint" multiplier="1"/>
+  </joint>
+
+  <joint name="dummy_mimic_fix_joint_left" type="fixed">
+    <origin xyz="0.0596 0.0145 0.0" rpy="0 0 0"/>
+    <parent link="link5"/>
+    <child link="dummy_mimic_fix_left"/>
+  </joint>
+
+  <joint name="end_effector_joint" type="fixed">
+    <origin xyz="0.126 0.0 0.0" rpy="0 0 0"/>
+    <parent link="link5"/>
+    <child link="end_effector_link"/>
+  </joint>
+
+  <!-- Right arm joints -->
+  <joint name="right_world_fixed" type="fixed">
+    <origin xyz="0 0.2 0" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="right_link1"/>
+  </joint>
+
+  <joint name="right_joint1" type="revolute">
+    <parent link="right_link1"/>
+    <child link="right_link2"/>
+    <origin xyz="0.012 0.0 0.017" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit velocity="4.8" effort="1" lower="${-pi*0.9}" upper="${pi*0.9}" />
+  </joint>
+
+  <joint name="right_joint2" type="revolute">
+    <parent link="right_link2"/>
+    <child link="right_link3"/>
+    <origin xyz="0.0 0.0 0.058" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit velocity="4.8" effort="1" lower="${-pi*0.57}" upper="${pi*0.5}" />
+  </joint>
+
+  <joint name="right_joint3" type="revolute">
+    <parent link="right_link3"/>
+    <child link="right_link4"/>
+    <origin xyz="0.024 0 0.128" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit velocity="4.8" effort="1" lower="${-pi*0.3}" upper="${pi*0.44}" />
+  </joint>
+
+  <joint name="right_joint4" type="revolute">
+    <parent link="right_link4"/>
+    <child link="right_link5"/>
+    <origin xyz="0.124 0.0 0.0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit velocity="4.8" effort="1" lower="${-pi*0.57}" upper="${pi*0.65}" />
+  </joint>
+
+  <joint name="right_gripper_left_joint" type="prismatic">
+    <parent link="right_link5"/>
+    <child link="right_gripper_left_link"/>
+    <origin xyz="0.0595 0.0145 0.0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit velocity="4.8" effort="10" lower="-0.010" upper="0.019" />
+  </joint>
+
+  <joint name="right_gripper_right_joint" type="prismatic">
+    <parent link="right_link5"/>
+    <child link="right_gripper_right_link"/>
+    <origin xyz="0.0595 -0.0145 0.0" rpy="0 0 0"/>
+    <axis xyz="0 -1 0"/>
+    <limit velocity="4.8" effort="10" lower="-0.010" upper="0.019" />
+    <mimic joint="right_gripper_left_joint" multiplier="1"/>
+  </joint>
+
+  <joint name="dummy_mimic_fix_joint_right" type="fixed">
+    <origin xyz="0.0596 0.0145 0.0" rpy="0 0 0"/>
+    <parent link="right_link5"/>
+    <child link="dummy_mimic_fix_right"/>
+  </joint>
+
+  <joint name="right_end_effector_joint" type="fixed">
+    <origin xyz="0.126 0.0 0.0" rpy="0 0 0"/>
+    <parent link="right_link5"/>
+    <child link="right_end_effector_link"/>
+  </joint>
+
+</robot>

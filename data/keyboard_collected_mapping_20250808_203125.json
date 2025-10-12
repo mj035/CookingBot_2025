@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "collection_method": "manual_keyboard_control",
+    "total_samples": 1,
+    "target_samples": 200,
+    "completion_rate": "0.5%",
+    "collection_timestamp": "20250808_203125",
+    "joint_limits": [
+      [
+        -3.14,
+        3.14
+      ],
+      [
+        -1.5,
+        1.5
+      ],
+      [
+        -1.5,
+        1.4
+      ],
+      [
+        -2.0,
+        2.0
+      ]
+    ],
+    "collection_status": "partial"
+  },
+  "samples": [
+    {
+      "sample_id": 1,
+      "timestamp": 1754652683.28445,
+      "vr_position_delta": [
+        -0.5161229074001312,
+        -0.307852316647768,
+        -0.35155790485441685
+      ],
+      "vr_orientation_delta": [
+        1.1789371718757293,
+        -0.07151614534804351,
+        -1.584455720735805
+      ],
+      "joint_angles": [
+        0.0,
+        -0.3,
+        0.8,
+        0.0
+      ],
+      "end_effector_position": [
+        0.2474206003240696,
+        2.8190002829947295e-09,
+        0.10329022302863725
+      ],
+      "end_effector_quaternion": [
+        0.979894416576779,
+        -1.1945381280995017e-09,
+        0.19951674707065,
+        5.8667819082790635e-09
+      ],
+      "collection_method": "manual_keyboard",
+      "selected_joint_at_collection": 0,
+      "fine_mode_active": false
+    }
+  ]
+}

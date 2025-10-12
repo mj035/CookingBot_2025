@@ -1,0 +1,89 @@
+controller_manager:
+  ros__parameters:
+    use_sim_time: False
+    update_rate: 1000  # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    # Left arm controller
+    arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    # Right arm controller
+    right_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    # Left gripper controller
+    gripper_controller:
+      type: position_controllers/GripperActionController
+
+    # Right gripper controller
+    right_gripper_controller:
+      type: position_controllers/GripperActionController
+
+# Left arm controller configuration
+arm_controller:
+  ros__parameters:
+    joints:
+      - joint1
+      - joint2
+      - joint3
+      - joint4
+
+    interface_name: position
+
+    command_interfaces:
+      - position
+
+    state_interfaces:
+      - position
+      - velocity
+
+    state_publish_rate: 200.0
+    action_monitor_rate: 20.0
+
+    allow_partial_joints_goal: false
+    open_loop_control: true
+    allow_integration_in_goal_trajectories: true
+    constraints:
+      stopped_velocity_tolerance: 0.01
+      goal_time: 0.0
+
+# Right arm controller configuration
+right_arm_controller:
+  ros__parameters:
+    joints:
+      - right_joint1
+      - right_joint2
+      - right_joint3
+      - right_joint4
+
+    interface_name: position
+
+    command_interfaces:
+      - position
+
+    state_interfaces:
+      - position
+      - velocity
+
+    state_publish_rate: 200.0
+    action_monitor_rate: 20.0
+
+    allow_partial_joints_goal: false
+    open_loop_control: true
+    allow_integration_in_goal_trajectories: true
+    constraints:
+      stopped_velocity_tolerance: 0.01
+      goal_time: 0.0
+
+# Left gripper controller configuration
+gripper_controller:
+  ros__parameters:
+    joint: gripper_left_joint
+
+# Right gripper controller configuration
+right_gripper_controller:
+  ros__parameters:
+    joint: right_gripper_left_joint

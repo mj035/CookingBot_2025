@@ -5,16 +5,20 @@
 본 시스템은 VR 컨트롤러의 자연스러운 움직임을 로봇의 관절 각도로 변환하여 직관적인 로봇 제어를 구현합니다.
 
 ### Single Arm 시스템
-- **test3.py**: VR 브릿지 (Docker/ROS1)
-- **mujoco_single_robot_v2.py**: MuJoCo 시뮬레이션
-- **mirror2.py**: 실제 로봇 제어 (Host/ROS2)
+- **bridge_single.py**: VR 브릿지 (Docker/ROS1)
+- **mujoco_single.py**: MuJoCo 시뮬레이션
+- **mirror_single.py**: 실제 로봇 제어 (Host/ROS2)
 
 ### Dual Arm 시스템
-- **test3_dual.py**: VR 브릿지 (Docker/ROS1)
-- **mujoco_mirror.py**: MuJoCo 시뮬레이션
+- **bridge_dual.py**: VR 브릿지 (Docker/ROS1)
+- **mujoco_dual.py**: MuJoCo 시뮬레이션
 - **mirror_dual.py**: 실제 로봇 제어 (Host/ROS2)
-- **dual_arm_bridge.py**: VR-MuJoCo 통신 브릿지
 
+양팔 모두 실행 방식은 동일합니다.
+1. 메타퀘스트2 quest2ros앱을 통해 도커 컨테이너로 pose값 보내는거 확인 후 브릿지파일 실행합니다.
+2. 호스트에서 mujoco 시뮬레이션 실행합니다.
+3. 하드웨어 연결 후 초기자세로 고정 시킵니다.
+4. 메타퀘스트 버튼 2개 눌러 캘리브레이션시켜 무주코에서도 초기자세인걸 확인하고 미러링 코드를 실행합니다.
 ## Joint-Pose 매핑 방법론
 
 ### 핵심 개념: Offset-based Control
@@ -98,6 +102,3 @@ Meta Quest 2 → [USB] → Docker(ROS1) → [TCP:12345] → MuJoCo
   }
 }
 ```
-
-
->>>>>>> 86155c2 (9/2)
