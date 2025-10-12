@@ -1,5 +1,5 @@
 
-![robot <-> mujoco](assets/IMG_1887.gif)
+![robot <-> mujoco](../assets/IMG_1887.gif)
 
 
 
